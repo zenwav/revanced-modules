@@ -183,26 +183,56 @@ config_update() {
 	fi
 }
 
+# _req() {
+# 	local ip="$1" op="$2"
+# 	shift 2
+# 	if [ "$op" = - ]; then
+# 		curl -L -c "$TEMP_DIR/cookie.txt" -b "$TEMP_DIR/cookie.txt" --connect-timeout 5 --retry 0 --fail -s -S "$@" "$ip"
+# 	else
+# 		if [ -f "$op" ]; then return; fi
+# 		local dlp
+# 		dlp="$(dirname "$op")/tmp.$(basename "$op")"
+# 		if [ -f "$dlp" ]; then
+# 			while [ -f "$dlp" ]; do sleep 1; done
+# 			return
+# 		fi
+# 		pr "Debug: Attempting curl request to URL (output to file: $dlp)"
+# 		curl -L -c "$TEMP_DIR/cookie.txt" -b "$TEMP_DIR/cookie.txt" --connect-timeout 5 --retry 0 --fail -s -S "$@" "$ip" -o "$dlp" || return 1
+# 		mv -f "$dlp" "$op"
+# 	fi
+# }
+# req() { _req "$1" "$2" -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:108.0) Gecko/20100101 Firefox/108.0"; }
+# gh_req() { _req "$1" "$2" -H "$GH_HEADER"; }
+
 _req() {
-	local ip="$1" op="$2"
-	shift 2
-	if [ "$op" = - ]; then
-		curl -L -c "$TEMP_DIR/cookie.txt" -b "$TEMP_DIR/cookie.txt" --connect-timeout 5 --retry 0 --fail -s -S "$@" "$ip"
-	else
-		if [ -f "$op" ]; then return; fi
-		local dlp
-		dlp="$(dirname "$op")/tmp.$(basename "$op")"
-		if [ -f "$dlp" ]; then
-			while [ -f "$dlp" ]; do sleep 1; done
-			return
-		fi
-		pr "Debug: Attempting curl request to URL (output to file: $dlp)"
-		curl -L -c "$TEMP_DIR/cookie.txt" -b "$TEMP_DIR/cookie.txt" --connect-timeout 5 --retry 0 --fail -s -S "$@" "$ip" -o "$dlp" || return 1
-		mv -f "$dlp" "$op"
-	fi
+    local ip="$1" op="$2"
+    shift 2
+    echo "DEBUG: _req function called with URL=$ip, output=$op, and options=$@" >&2
+    if [ "$op" = - ]; then
+        curl -L -c "$TEMP_DIR/cookie.txt" -b "$TEMP_DIR/cookie.txt" --connect-timeout 5 --retry 0 --fail -s -S "$@" "$ip"
+    else
+        if [ -f "$op" ]; then return; fi
+        local dlp
+        dlp="$(dirname "$op")/tmp.$(basename "$op")"
+        echo "DEBUG: Download path=$dlp" >&2
+        curl -L -c "$TEMP_DIR/cookie.txt" -b "$TEMP_DIR/cookie.txt" --connect-timeout 5 --retry 0 --fail -s -S "$@" "$ip" -o "$dlp" || return 1
+        mv -f "$dlp" "$op"
+    fi
 }
-req() { _req "$1" "$2" -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:108.0) Gecko/20100101 Firefox/108.0"; }
-gh_req() { _req "$1" "$2" -H "$GH_HEADER"; }
+
+gh_req() {
+    echo "DEBUG: gh_req called with URL=$1 and output=$2" >&2
+    _req "$1" "$2" -H "$GH_HEADER"
+}
+
+gh_dl() {
+    if [ ! -f "$1" ]; then
+        echo "DEBUG: gh_dl called to download $1 from $2" >&2
+        pr "Getting '$1' from '$2'"
+        _req "$2" "$1" -H "$GH_HEADER" -H "Accept: application/octet-stream"
+    fi
+}
+
 
 gh_dl() {
 	if [ ! -f "$1" ]; then
