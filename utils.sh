@@ -220,6 +220,8 @@ _req() {
     fi
 }
 
+req() { _req "$1" "$2" -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:108.0) Gecko/20100101 Firefox/108.0"; }
+
 gh_req() {
     echo "DEBUG: gh_req called with URL=$1 and output=$2" >&2
     _req "$1" "$2" -H "$GH_HEADER"
@@ -234,12 +236,12 @@ gh_dl() {
 }
 
 
-gh_dl() {
-	if [ ! -f "$1" ]; then
-		pr "Getting '$1' from '$2'"
-		_req "$2" "$1" -H "$GH_HEADER" -H "Accept: application/octet-stream"
-	fi
-}
+# gh_dl() {
+# 	if [ ! -f "$1" ]; then
+# 		pr "Getting '$1' from '$2'"
+# 		_req "$2" "$1" -H "$GH_HEADER" -H "Accept: application/octet-stream"
+# 	fi
+# }
 
 log() { echo -e "$1  " >>"build.md"; }
 get_highest_ver() {
