@@ -438,6 +438,7 @@ patch_apk() {
 check_sig() {
     local file=$1 pkg_name=$2
     local sig
+	local apksigner
     
     # Print package name being checked
     echo "Checking signature for package: $pkg_name"
@@ -449,8 +450,8 @@ check_sig() {
         grep "$pkg_name" sig.txt
 
 		#Get apksigner version
-		apksigver = $(java -jar "$APKSIGNER" version) 
-		echo "$apksigver"
+		apksigner=$(java -jar "$APKSIGNER" version) 
+		echo "$apksigner"
         
         # Get and print actual signature
         echo "Actual APK signature:"
