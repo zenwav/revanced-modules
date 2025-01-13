@@ -447,6 +447,10 @@ check_sig() {
         echo "Package found in sig.txt"
         echo "Expected signature from sig.txt:"
         grep "$pkg_name" sig.txt
+
+		#Get apksigner version
+		apksigver = $(java -jar "$APKSIGNER" version) 
+		echo "$apksigver"
         
         # Get and print actual signature
         echo "Actual APK signature:"
