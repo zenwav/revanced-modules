@@ -286,6 +286,8 @@ merge_splits() {
 	echo "Current directory is $(pwd)"
 	echo "The contents are"
 	ls -h
+	echo "the contents of temp are" 
+	ls -h temp/
 	echo "The contents of bundle-zip is"
 	ls -h ${bundle}-zip/
 	# if building module, sign the merged apk properly
