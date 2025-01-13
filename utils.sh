@@ -183,45 +183,24 @@ config_update() {
 	fi
 }
 
-# _req() {
-# 	local ip="$1" op="$2"
-# 	shift 2
-# 	if [ "$op" = - ]; then
-# 		curl -L -c "$TEMP_DIR/cookie.txt" -b "$TEMP_DIR/cookie.txt" --connect-timeout 5 --retry 0 --fail -s -S "$@" "$ip"
-# 	else
-# 		if [ -f "$op" ]; then return; fi
-# 		local dlp
-# 		dlp="$(dirname "$op")/tmp.$(basename "$op")"
-# 		if [ -f "$dlp" ]; then
-# 			while [ -f "$dlp" ]; do sleep 1; done
-# 			return
-# 		fi
-# 		curl -L -c "$TEMP_DIR/cookie.txt" -b "$TEMP_DIR/cookie.txt" --connect-timeout 5 --retry 0 --fail -s -S "$@" "$ip" -o "$dlp" || return 1
-# 		mv -f "$dlp" "$op"
-# 	fi
-# }
-# req() { _req "$1" "$2" -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:108.0) Gecko/20100101 Firefox/108.0"; }
-
 _req() {
-    local ip="$1" op="\$2"
-    shift 2
-    if [ "$op" = - ]; then
-        curl -L -c "$TEMP_DIR/cookie.txt" -b "$TEMP_DIR/cookie.txt" --connect-timeout 5 --retry 0 --fail -s -S "$@" "$ip"
-    else
-        if [ -f "$op" ]; then return; fi
-        local dlp
-        dlp="$(dirname "$op")/tmp.$(basename "$op")"
-        if [ -f "$dlp" ]; then
-            while [ -f "$dlp" ]; do sleep 1; done
-            return
-        fi
-        curl -L -c "$TEMP_DIR/cookie.txt" -b "$TEMP_DIR/cookie.txt" --connect-timeout 5 --retry 0 --fail -s -S "$@" "$ip" -o "$dlp" || return 1
-        mv -f "$dlp" "$op"
-    fi
+	local ip="$1" op="$2"
+	shift 2
+	if [ "$op" = - ]; then
+		curl -L -c "$TEMP_DIR/cookie.txt" -b "$TEMP_DIR/cookie.txt" --connect-timeout 5 --retry 0 --fail -s -S "$@" "$ip"
+	else
+		if [ -f "$op" ]; then return; fi
+		local dlp
+		dlp="$(dirname "$op")/tmp.$(basename "$op")"
+		if [ -f "$dlp" ]; then
+			while [ -f "$dlp" ]; do sleep 1; done
+			return
+		fi
+		curl -L -c "$TEMP_DIR/cookie.txt" -b "$TEMP_DIR/cookie.txt" --connect-timeout 5 --retry 0 --fail -s -S "$@" "$ip" -o "$dlp" || return 1
+		mv -f "$dlp" "$op"
+	fi
 }
-
-req() { _req "\$1" "$2" -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:108.0) Gecko/20100101 Firefox/108.0"; }
-
+req() { _req "$1" "$2" -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:108.0) Gecko/20100101 Firefox/108.0"; }
 
 gh_req() { _req "$1" "$2" -H "$GH_HEADER"; }
 gh_dl() {
