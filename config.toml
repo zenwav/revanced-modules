@@ -64,7 +64,7 @@ patches-source = "inotia00/revanced-patches"
 integrations-source = "inotia00/revanced-integrations"
 cli-source = "inotia00/revanced-cli"
 rv-brand = "ReVanced Extended"
-apkmirror-dpi = "120-640dpi"    
+# apkmirror-dpi = "120-640dpi"    
 build-mode = "apk"
 
 [Twitch]
