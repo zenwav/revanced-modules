@@ -273,8 +273,8 @@ merge_splits() {
 	unzip -qo "${bundle}.mzip" -d "${bundle}-zip"
 	pushd "${bundle}-zip" || abort
 	zip -0rq "${CWD}/${bundle}.zip" .
-	ls -h
 	popd || abort
+	ls -h com.reddit.frontpage-2025.02.0-all.apk.apkm-zip/
 	# if building module, sign the merged apk properly
 	if isoneof "module" "${build_mode_arr[@]}"; then
 		patch_apk "${bundle}.zip" "${output}" "--exclusive" "${args[cli]}" "${args[ptjar]}"
