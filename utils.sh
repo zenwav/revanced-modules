@@ -285,55 +285,174 @@ merge_splits() {
 }
 
 # -------------------- apkmirror --------------------
-apk_mirror_search() {
-	local resp="$1" dpi="$2" arch="$3" apk_bundle="$4"
-	local apparch dlurl node app_table
-	if [ "$arch" = all ]; then
-		apparch=(universal noarch 'arm64-v8a + armeabi-v7a')
-	else apparch=("$arch" universal noarch 'arm64-v8a + armeabi-v7a'); fi
-	for ((n = 1; n < 40; n++)); do
-		node=$($HTMLQ "div.table-row.headerFont:nth-last-child($n)" -r "span:nth-child(n+3)" <<<"$resp")
-		if [ -z "$node" ]; then break; fi
-		app_table=$($HTMLQ --text --ignore-whitespace <<<"$node")
-		if [ "$(sed -n 3p <<<"$app_table")" = "$apk_bundle" ] && [ "$(sed -n 6p <<<"$app_table")" = "$dpi" ] &&
-			isoneof "$(sed -n 4p <<<"$app_table")" "${apparch[@]}"; then
-			dlurl=$($HTMLQ --base https://www.apkmirror.com --attribute href "div:nth-child(1) > a:nth-child(1)" <<<"$node")
-			echo "$dlurl"
-			return 0
-		fi
-	done
-	return 1
-}
-dl_apkmirror() {
-	local url=$1 version=${2// /-} output=$3 arch=$4 dpi=$5 is_bundle=false
-	if [ -f "${output}.apkm" ]; then
-		is_bundle=true
-	else
-		if [ "$arch" = "arm-v7a" ]; then arch="armeabi-v7a"; fi
-		local resp node app_table dlurl=""
-		url="${url}/${url##*/}-${version//./-}-release/"
-		resp=$(req "$url" -) || return 1
-		node=$($HTMLQ "div.table-row.headerFont:nth-last-child(1)" -r "span:nth-child(n+3)" <<<"$resp")
-		if [ "$node" ]; then
-			if ! dlurl=$(apk_mirror_search "$resp" "$dpi" "${arch}" "APK"); then
-				if ! dlurl=$(apk_mirror_search "$resp" "$dpi" "${arch}" "BUNDLE"); then
-					return 1
-				else is_bundle=true; fi
-			fi
-			[ -z "$dlurl" ] && return 1
-			resp=$(req "$dlurl" -)
-		fi
-		url=$(echo "$resp" | $HTMLQ --base https://www.apkmirror.com --attribute href "a.btn") || return 1
-		url=$(req "$url" - | $HTMLQ --base https://www.apkmirror.com --attribute href "span > a[rel = nofollow]") || return 1
-	fi
+# apk_mirror_search() {
+# 	local resp="$1" dpi="$2" arch="$3" apk_bundle="$4"
+# 	local apparch dlurl node app_table
+# 	if [ "$arch" = all ]; then
+# 		apparch=(universal noarch 'arm64-v8a + armeabi-v7a')
+# 	else apparch=("$arch" universal noarch 'arm64-v8a + armeabi-v7a'); fi
+# 	for ((n = 1; n < 40; n++)); do
+# 		node=$($HTMLQ "div.table-row.headerFont:nth-last-child($n)" -r "span:nth-child(n+3)" <<<"$resp")
+# 		if [ -z "$node" ]; then break; fi
+# 		app_table=$($HTMLQ --text --ignore-whitespace <<<"$node")
+# 		if [ "$(sed -n 3p <<<"$app_table")" = "$apk_bundle" ] && [ "$(sed -n 6p <<<"$app_table")" = "$dpi" ] &&
+# 			isoneof "$(sed -n 4p <<<"$app_table")" "${apparch[@]}"; then
+# 			dlurl=$($HTMLQ --base https://www.apkmirror.com --attribute href "div:nth-child(1) > a:nth-child(1)" <<<"$node")
+# 			echo "$dlurl"
+# 			return 0
+# 		fi
+# 	done
+# 	return 1
+# }
+# dl_apkmirror() {
+# 	local url=$1 version=${2// /-} output=$3 arch=$4 dpi=$5 is_bundle=false
+# 	if [ -f "${output}.apkm" ]; then
+# 		is_bundle=true
+# 	else
+# 		if [ "$arch" = "arm-v7a" ]; then arch="armeabi-v7a"; fi
+# 		local resp node app_table dlurl=""
+# 		url="${url}/${url##*/}-${version//./-}-release/"
+# 		resp=$(req "$url" -) || return 1
+# 		node=$($HTMLQ "div.table-row.headerFont:nth-last-child(1)" -r "span:nth-child(n+3)" <<<"$resp")
+# 		if [ "$node" ]; then
+# 			if ! dlurl=$(apk_mirror_search "$resp" "$dpi" "${arch}" "APK"); then
+# 				if ! dlurl=$(apk_mirror_search "$resp" "$dpi" "${arch}" "BUNDLE"); then
+# 					return 1
+# 				else is_bundle=true; fi
+# 			fi
+# 			[ -z "$dlurl" ] && return 1
+# 			resp=$(req "$dlurl" -)
+# 		fi
+# 		url=$(echo "$resp" | $HTMLQ --base https://www.apkmirror.com --attribute href "a.btn") || return 1
+# 		url=$(req "$url" - | $HTMLQ --base https://www.apkmirror.com --attribute href "span > a[rel = nofollow]") || return 1
+# 	fi
 
-	if [ "$is_bundle" = true ]; then
-		req "$url" "${output}.apkm"
-		merge_splits "${output}.apkm" "${output}"
-	else
-		req "$url" "${output}"
-	fi
+# 	if [ "$is_bundle" = true ]; then
+# 		req "$url" "${output}.apkm"
+# 		merge_splits "${output}.apkm" "${output}"
+# 	else
+# 		req "$url" "${output}"
+# 	fi
+# }
+
+
+apk_mirror_search() {
+    local resp="$1" dpi="$2" arch="$3" apk_bundle="$4"
+    local apparch dlurl node app_table
+    
+    pr "Debug: Searching APKMirror with parameters:"
+    pr "DPI: $dpi"
+    pr "Architecture: $arch"
+    pr "APK Bundle type: $apk_bundle"
+    
+    if [ "$arch" = all ]; then
+        apparch=(universal noarch 'arm64-v8a + armeabi-v7a')
+        pr "Debug: Using architecture options: ${apparch[*]}"
+    else 
+        apparch=("$arch" universal noarch 'arm64-v8a + armeabi-v7a')
+        pr "Debug: Using architecture options: ${apparch[*]}"
+    fi
+
+    for ((n = 1; n < 40; n++)); do
+        node=$($HTMLQ "div.table-row.headerFont:nth-last-child($n)" -r "span:nth-child(n+3)" <<<"$resp")
+        if [ -z "$node" ]; then 
+            pr "Debug: No more nodes to check at index $n"
+            break
+        fi
+        
+        pr "Debug: Checking node $n:"
+        app_table=$($HTMLQ --text --ignore-whitespace <<<"$node")
+        pr "Debug: Found app info:"
+        pr "$(sed -n 1,6p <<<"$app_table")"
+        
+        if [ "$(sed -n 3p <<<"$app_table")" = "$apk_bundle" ] && [ "$(sed -n 6p <<<"$app_table")" = "$dpi" ] &&
+            isoneof "$(sed -n 4p <<<"$app_table")" "${apparch[@]}"; then
+            dlurl=$($HTMLQ --base https://www.apkmirror.com --attribute href "div:nth-child(1) > a:nth-child(1)" <<<"$node")
+            pr "Debug: Found matching APK! Download URL: $dlurl"
+            echo "$dlurl"
+            return 0
+        fi
+    done
+    pr "Debug: No matching APK found"
+    return 1
 }
+
+dl_apkmirror() {
+    local url=$1 version=${2// /-} output=$3 arch=$4 dpi=$5 is_bundle=false
+    
+    pr "Debug: Starting APKMirror download:"
+    pr "URL: $url"
+    pr "Version: $version"
+    pr "Output: $output"
+    pr "Architecture: $arch"
+    pr "DPI: $dpi"
+    
+    if [ -f "${output}.apkm" ]; then
+        is_bundle=true
+        pr "Debug: Found existing APKM bundle"
+    else
+        pr "Debug: No existing APKM bundle found"
+        if [ "$arch" = "arm-v7a" ]; then 
+            arch="armeabi-v7a"
+            pr "Debug: Converted arch to armeabi-v7a"
+        fi
+        
+        local resp node app_table dlurl=""
+        url="${url}/${url##*/}-${version//./-}-release/"
+        pr "Debug: Constructed URL: $url"
+        
+        resp=$(req "$url" -)
+        if [ $? -ne 0 ]; then
+            pr "Debug: Failed to get response from URL"
+            pr "Debug: Response: $resp"
+            return 1
+        fi
+        
+        pr "Debug: Got response from URL, searching for download link"
+        node=$($HTMLQ "div.table-row.headerFont:nth-last-child(1)" -r "span:nth-child(n+3)" <<<"$resp")
+        if [ "$node" ]; then
+            pr "Debug: Found node in response"
+            if ! dlurl=$(apk_mirror_search "$resp" "$dpi" "${arch}" "APK"); then
+                pr "Debug: No APK found, trying BUNDLE"
+                if ! dlurl=$(apk_mirror_search "$resp" "$dpi" "${arch}" "BUNDLE"); then
+                    pr "Debug: No BUNDLE found either"
+                    return 1
+                else 
+                    is_bundle=true
+                    pr "Debug: Found BUNDLE"
+                fi
+            fi
+            [ -z "$dlurl" ] && return 1
+            resp=$(req "$dlurl" -)
+        fi
+        
+        pr "Debug: Getting final download URL"
+        url=$(echo "$resp" | $HTMLQ --base https://www.apkmirror.com --attribute href "a.btn")
+        if [ $? -ne 0 ]; then
+            pr "Debug: Failed to get download button URL"
+            return 1
+        fi
+        pr "Debug: Download button URL: $url"
+        
+        url=$(req "$url" - | $HTMLQ --base https://www.apkmirror.com --attribute href "span > a[rel = nofollow]")
+        if [ $? -ne 0 ]; then
+            pr "Debug: Failed to get final download URL"
+            return 1
+        fi
+        pr "Debug: Final download URL: $url"
+    fi
+
+    if [ "$is_bundle" = true ]; then
+        pr "Debug: Downloading bundle to ${output}.apkm"
+        req "$url" "${output}.apkm"
+        pr "Debug: Merging splits"
+        merge_splits "${output}.apkm" "${output}"
+    else
+        pr "Debug: Downloading APK to ${output}"
+        req "$url" "${output}"
+    fi
+}
+
 get_apkmirror_vers() {
 	local vers apkm_resp
 	apkm_resp=$(req "https://www.apkmirror.com/uploads/?appcategory=${__APKMIRROR_CAT__}" -)
