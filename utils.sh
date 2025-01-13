@@ -305,35 +305,46 @@ apk_mirror_search() {
 	return 1
 }
 dl_apkmirror() {
-	local url=$1 version=${2// /-} output=$3 arch=$4 dpi=$5 is_bundle=false
-	if [ -f "${output}.apkm" ]; then
-		is_bundle=true
-	else
-		if [ "$arch" = "arm-v7a" ]; then arch="armeabi-v7a"; fi
-		local resp node app_table dlurl=""
-		url="${url}/${url##*/}-${version//./-}-release/"
-		resp=$(req "$url" -) || return 1
-		node=$($HTMLQ "div.table-row.headerFont:nth-last-child(1)" -r "span:nth-child(n+3)" <<<"$resp")
-		if [ "$node" ]; then
-			if ! dlurl=$(apk_mirror_search "$resp" "$dpi" "${arch}" "APK"); then
-				if ! dlurl=$(apk_mirror_search "$resp" "$dpi" "${arch}" "BUNDLE"); then
-					return 1
-				else is_bundle=true; fi
-			fi
-			[ -z "$dlurl" ] && return 1
-			resp=$(req "$dlurl" -)
-		fi
-		url=$(echo "$resp" | $HTMLQ --base https://www.apkmirror.com --attribute href "a.btn") || return 1
-		url=$(req "$url" - | $HTMLQ --base https://www.apkmirror.com --attribute href "span > a[rel = nofollow]") || return 1
-	fi
+    local url=$1 version=${2// /-} output=$3 arch=$4 dpi=$5 is_bundle=false
+    
+    # Add first debug statement here
+    pr "Debug: Initial URL: $url"
+    if [ -z "$url" ]; then
+        pr "Debug: Empty URL detected"
+        return 1
+    fi  # Changed } to fi for proper bash syntax
 
-	if [ "$is_bundle" = true ]; then
-		req "$url" "${output}.apkm"
-		merge_splits "${output}.apkm" "${output}"
-	else
-		req "$url" "${output}"
-	fi
+    pr "Debug: Starting APKMirror download:"
+    pr "URL: $url"
+    pr "Version: $version"
+    pr "Output: $output"
+    pr "Architecture: $arch"
+    pr "DPI: $dpi"
+    
+    if [ -f "${output}.apkm" ]; then
+        is_bundle=true
+        pr "Debug: Found existing APKM bundle"
+    else
+        pr "Debug: No existing APKM bundle found"
+        if [ "$arch" = "arm-v7a" ]; then 
+            arch="armeabi-v7a"
+            pr "Debug: Converted arch to armeabi-v7a"
+        fi
+        
+        local resp node app_table dlurl=""
+        url="${url}/${url##*/}-${version//./-}-release/"
+        
+        # Add second debug statement here
+        pr "Debug: Constructed URL: $url"
+        if [ -z "$url" ]; then
+            pr "Debug: Empty URL detected after construction"
+            return 1
+        fi
+
+        resp=$(req "$url" -)
+    fi
 }
+
 get_apkmirror_vers() {
 	local vers apkm_resp
 	apkm_resp=$(req "https://www.apkmirror.com/uploads/?appcategory=${__APKMIRROR_CAT__}" -)
