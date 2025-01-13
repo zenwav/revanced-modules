@@ -465,7 +465,7 @@ patch_apk() {
 check_sig() {
     local file=$1 pkg_name=$2
     local sig
-	local apksigner
+	local apksignerver
     
     # Print package name being checked
     echo "Checking signature for package: $pkg_name"
@@ -477,8 +477,8 @@ check_sig() {
         grep "$pkg_name" sig.txt
 
 		#Get apksigner version
-		apksigner=$(java -jar "$APKSIGNER" version) 
-		echo "Apk signer version: $apksigner"
+		apksignerver=$(java -jar "$APKSIGNER" version) 
+		echo "Apk signer version: $apksignerver"
         
         # Get and print actual signature
         echo "Actual APK signature:"
@@ -583,9 +583,9 @@ build_rv() {
 		done
 		if [ ! -f "$stock_apk" ]; then return 0; fi
 	fi
-	# if ! check_sig "$stock_apk" "$pkg_name"; then
-	# 	abort "apk signature mismatch '$stock_apk'"
-	# fi
+	if ! check_sig "$stock_apk" "$pkg_name"; then
+		abort "apk signature mismatch '$stock_apk'"
+	fi
 	log "${table}: ${version}"
 
 	local microg_patch
