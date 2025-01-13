@@ -272,6 +272,7 @@ merge_splits() {
 	mkdir "${bundle}-zip"
 	unzip -qo "${bundle}.mzip" -d "${bundle}-zip"
 	pushd "${bundle}-zip" || abort
+	ls -h
 	zip -0rq "${CWD}/${bundle}.zip" .
 	popd || abort
 	# if building module, sign the merged apk properly
