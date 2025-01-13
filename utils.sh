@@ -402,7 +402,6 @@ apk_mirror_search() {
         if [ "$(sed -n 3p <<<"$app_table")" = "$apk_bundle" ] && [ "$(sed -n 6p <<<"$app_table")" = "$dpi" ] &&
             isoneof "$(sed -n 4p <<<"$app_table")" "${apparch[@]}"; then
             dlurl=$($HTMLQ --base https://www.apkmirror.com --attribute href "div:nth-child(1) > a:nth-child(1)" <<<"$node")
-            pr "Debug: Found matching APK! Download URL: $dlurl"
             echo "$dlurl"
             return 0
         fi
