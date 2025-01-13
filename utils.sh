@@ -200,21 +200,8 @@ _req() {
 		mv -f "$dlp" "$op"
 	fi
 }
-req() {
-    _req "$1" "$2" \
-        -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36" \
-        -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8" \
-        -H "Accept-Language: en-US,en;q=0.5" \
-        -H "Accept-Encoding: gzip, deflate, br" \
-        -H "DNT: 1" \
-        -H "Connection: keep-alive" \
-        -H "Upgrade-Insecure-Requests: 1" \
-        -H "Sec-Fetch-Dest: document" \
-        -H "Sec-Fetch-Mode: navigate" \
-        -H "Sec-Fetch-Site: none" \
-        -H "Sec-Fetch-User: ?1" \
-        -H "Cache-Control: max-age=0"
-}
+req() { _req "\$1" "$2" -H "Referer: https://www.apkmirror.com/" -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36"; }
+
 gh_req() { _req "$1" "$2" -H "$GH_HEADER"; }
 gh_dl() {
 	if [ ! -f "$1" ]; then
