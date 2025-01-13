@@ -269,12 +269,25 @@ merge_splits() {
 		return 1
 	fi
 	# this is required because of apksig
+	echo "Current directory is ${pwd}"
+	echo "The contents are"
+	ls -h
 	mkdir "${bundle}-zip"
 	unzip -qo "${bundle}.mzip" -d "${bundle}-zip"
+	echo "Current directory is ${pwd}"
+	echo "The contents are"
+	ls -h
 	pushd "${bundle}-zip" || abort
 	zip -0rq "${CWD}/${bundle}.zip" .
+	echo "Current directory is ${pwd}"
+	echo "The contents are"
+	ls -h
 	popd || abort
-	ls -h com.reddit.frontpage-2025.02.0-all.apk.apkm-zip/
+	echo "Current directory is ${pwd}"
+	echo "The contents are"
+	ls -h
+	echo "The contents of bundle-zip is"
+	ls -h ${bundle}-zip/
 	# if building module, sign the merged apk properly
 	if isoneof "module" "${build_mode_arr[@]}"; then
 		patch_apk "${bundle}.zip" "${output}" "--exclusive" "${args[cli]}" "${args[ptjar]}"
