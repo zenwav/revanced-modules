@@ -262,7 +262,7 @@ merge_splits() {
 	local bundle=$1 output=$2
 	pr "Merging splits"
 	gh_dl "$TEMP_DIR/apkeditor.jar" "https://github.com/REAndroid/APKEditor/releases/download/V1.4.1/APKEditor-V1.4.1.jar" >/dev/null || return 1
-	if ! OP=$(java -jar "$TEMP_DIR/apkeditor.jar" merge -i "${bundle}" -o "${bundle}.mzip" -clean-meta -f 2>&1); then
+	if ! OP=$(java -jar "$TEMP_DIR/apkeditor.jar" m -i "${bundle}" -o "${bundle}.mzip" 2>&1); then
 		epr "$OP"
 		return 1
 	fi
@@ -425,13 +425,45 @@ patch_apk() {
 	fi
 }
 
+# check_sig() {
+# 	local file=$1 pkg_name=$2
+# 	local sig
+# 	if grep -q "$pkg_name" sig.txt; then
+# 		sig=$(java -jar "$APKSIGNER" verify --print-certs "$file" | grep ^Signer | grep SHA-256 | tail -1 | awk '{print $NF}')
+# 		grep -qFx "$sig $pkg_name" sig.txt
+# 	fi
+# }
+
 check_sig() {
-	local file=$1 pkg_name=$2
-	local sig
-	if grep -q "$pkg_name" sig.txt; then
-		sig=$(java -jar "$APKSIGNER" verify --print-certs "$file" | grep ^Signer | grep SHA-256 | tail -1 | awk '{print $NF}')
-		grep -qFx "$sig $pkg_name" sig.txt
-	fi
+    local file=$1 pkg_name=$2
+    local sig
+    
+    # Print package name being checked
+    echo "Checking signature for package: $pkg_name"
+    
+    # Print if package exists in sig.txt
+    if grep -q "$pkg_name" sig.txt; then
+        echo "Package found in sig.txt"
+        echo "Expected signature from sig.txt:"
+        grep "$pkg_name" sig.txt
+        
+        # Get and print actual signature
+        echo "Actual APK signature:"
+        sig=$(java -jar "$APKSIGNER" verify --print-certs "$file" | grep ^Signer | grep SHA-256 | tail -1 | awk '{print $NF}')
+        echo "$sig $pkg_name"
+        
+        # Print verification result
+        if grep -qFx "$sig $pkg_name" sig.txt; then
+            echo "✓ Signature matches"
+            return 0
+        else
+            echo "✗ Signature mismatch"
+            return 1
+        fi
+    else
+        echo "Package not found in sig.txt"
+        return 1
+    fi
 }
 
 build_rv() {
