@@ -8,6 +8,7 @@ parallel-jobs = 1
 
 [YouTube]
 enabled = false
+enabled = false
 build-mode = "both"
 excluded-patches = ""
 included-patches = ""
